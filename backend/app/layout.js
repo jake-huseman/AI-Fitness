@@ -35,16 +35,36 @@ function Header() {
       <h1 style={{ margin: 0 }}>Project App</h1>
       <nav>
         {user ? (
-          <a
-            href="/api/auth/logout"
-            style={{ color: "#fff", textDecoration: "none", marginRight: "10px" }}
-          >
-            Logout
-          </a>
+          <>
+            <a
+              href="/chat"
+              style={{
+                color: "#fff",
+                textDecoration: "none",
+                marginRight: "10px",
+              }}
+            >
+              Chat
+            </a>
+            <a
+              href="/api/auth/logout"
+              style={{
+                color: "#fff",
+                textDecoration: "none",
+                marginRight: "10px",
+              }}
+            >
+              Logout
+            </a>
+          </>
         ) : (
           <a
             href="/api/auth/login"
-            style={{ color: "#fff", textDecoration: "none", marginRight: "10px" }}
+            style={{
+              color: "#fff",
+              textDecoration: "none",
+              marginRight: "10px",
+            }}
           >
             Login
           </a>
