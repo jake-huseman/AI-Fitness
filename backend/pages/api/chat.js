@@ -11,9 +11,10 @@ export default async function handler(req, res) {
       console.log("Using Fireworks API Key:", process.env.FIREWORKS_API_KEY.slice(0, 5) + "*****");
 
       const payload = {
-        model: "accounts/fireworks/models/llama-v2-7b-chat", // Replace with valid model
+        model: "accounts/fireworks/models/llama-v3p2-3b-instruct", // Replace with a valid model
         messages: [{ role: "user", content: message }],
       };
+      
 
       console.log("Payload being sent to Fireworks.ai:", JSON.stringify(payload, null, 2));
 
@@ -26,8 +27,13 @@ export default async function handler(req, res) {
         body: JSON.stringify(payload),
       });
 
+      // Log the response status and headers
       console.log("Response status from Fireworks.ai:", response.status);
-      console.log("Response headers from Fireworks.ai:", JSON.stringify(response.headers.raw(), null, 2));
+      console.log(
+        "Response headers from Fireworks.ai:",
+        Object.fromEntries(response.headers.entries()) // Convert headers to an object for better readability
+      );
+
       const responseText = await response.text();
       console.log("Response body from Fireworks.ai:", responseText);
 
