@@ -1,5 +1,15 @@
 {
-  "dependencies": {
-    "@auth0/nextjs-auth0": "^3.5.0"
-  }
+    "name": "web",
+    "version": "1.0.0",
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start"
+    },
+    "dependencies": {
+        "@auth0/nextjs-auth0": "^3.5.0",
+        "next": "^15.1.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    }
 }
