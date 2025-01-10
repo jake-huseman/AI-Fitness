@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       console.log("[Chat API]: Incoming message:", message);
 
       const payload = {
-        model: "accounts/fireworks/models/llama-v3p2-3b-instruct", // Ensure this is a valid model
+        model: "accounts/fireworks/models/llama-v3p2-3b-instruct",
         messages: [{ role: "user", content: message }],
       };
 

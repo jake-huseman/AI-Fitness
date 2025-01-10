@@ -1,5 +1,5 @@
 import "../styles/globals.css";
-import { UserProvider, useUser } from "@auth0/nextjs-auth0/client"; // Correct import paths
+import { UserProvider, useUser } from "@auth0/nextjs-auth0/client"; 
 import { useRouter } from "next/router";
 import Header from "../components/Header";
 
