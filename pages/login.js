@@ -12,13 +12,13 @@ export default function LoginPage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div style={styles.loading}>Loading...</div>;
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Welcome to Your App</h1>
-        <p style={styles.subtitle}>Please log in to access your dashboard.</p>
+        <h1 style={styles.title}>Welcome to MyApp</h1>
+        <p style={styles.subtitle}>Log in to access your personalized dashboard.</p>
         <a href="/api/auth/login" style={styles.loginButton}>
           Log In
         </a>
@@ -33,17 +33,20 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    backgroundColor: "#f0f4f8",
+    background: "linear-gradient(135deg, #0070f3, #3a8dff)",
+    color: "#fff",
   },
   card: {
     backgroundColor: "#fff",
     padding: "2rem",
     borderRadius: "8px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    boxShadow: "0 6px 10px rgba(0, 0, 0, 0.15)",
     textAlign: "center",
+    maxWidth: "400px",
+    width: "100%",
   },
   title: {
-    fontSize: "1.5rem",
+    fontSize: "1.8rem",
     fontWeight: "bold",
     marginBottom: "1rem",
     color: "#333",
@@ -61,5 +64,6 @@ const styles = {
     borderRadius: "4px",
     textDecoration: "none",
     fontSize: "1rem",
+    transition: "background-color 0.3s ease",
   },
 };
