@@ -1,130 +1,167 @@
 import { useState } from "react";
-import jsPDF from "jspdf";
+import { useUser } from "@auth0/nextjs-auth0";
 
 export default function GeneratePlans() {
+    const { user } = useUser();
     const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
+        firstName: user?.given_name || "",
+        lastName: user?.family_name || "",
+        age: "",
+        gender: "Select",
         heightFeet: "",
         heightInches: "",
         weight: "",
-        age: "",
-        gender: "",
-        fitnessLevel: "",
-        dietPreference: "",
+        fitnessLevel: "Select",
+        dietPreference: "Select",
+        fitnessGoals: [],
+        dailyLifestyle: "",
     });
+
     const [fitnessPlan, setFitnessPlan] = useState("");
     const [mealPlan, setMealPlan] = useState("");
 
-    const generatePlans = () => {
-        const fullName = `${formData.firstName} ${formData.lastName}`;
-
-        // Generate fitness plan
-        const generatedFitnessPlan = `Fitness Plan for ${fullName}\n\n` +
-            `- Cardio: 30 minutes, 5 times per week\n` +
-            `- Strength Training: 3 sessions per week focusing on ${formData.fitnessLevel} level\n` +
-            `- Flexibility: Daily stretching for 10 minutes\n`;
-
-        // Generate meal plan
-        const generatedMealPlan = `Meal Plan for ${fullName}\n\n` +
-            `- Breakfast: Oatmeal with fresh fruit\n` +
-            `- Lunch: Grilled chicken salad\n` +
-            `- Dinner: Steamed vegetables with baked salmon\n`;
-
-        setFitnessPlan(generatedFitnessPlan);
-        setMealPlan(generatedMealPlan);
-    };
-
-    const downloadPDF = (plan, type) => {
-        const doc = new jsPDF();
-        const fileName = `${formData.lastName}${formData.firstName}_${type}.pdf`;
-        doc.text(plan, 10, 10);
-        doc.save(fileName);
-    };
-
-    const handleChange = (e) => {
+    const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    return (
-        <div style={{ padding: "20px", maxWidth: "800px", margin: "auto" }}>
-            <h1>Generate Fitness & Meal Plans</h1>
-            <form
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    generatePlans();
-                }}
-                style={{ marginBottom: "20px" }}
-            >
-                <div>
-                    <label>First Name:</label>
-                    <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
-                </div>
-                <div>
-                    <label>Last Name:</label>
-                    <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
-                </div>
-                <div>
-                    <label>Height (Feet):</label>
-                    <input type="number" name="heightFeet" value={formData.heightFeet} onChange={handleChange} required />
-                </div>
-                <div>
-                    <label>Height (Inches):</label>
-                    <input type="number" name="heightInches" value={formData.heightInches} onChange={handleChange} required />
-                </div>
-                <div>
-                    <label>Weight (lbs):</label>
-                    <input type="number" name="weight" value={formData.weight} onChange={handleChange} required />
-                </div>
-                <div>
-                    <label>Age:</label>
-                    <input type="number" name="age" value={formData.age} onChange={handleChange} required />
-                </div>
-                <div>
-                    <label>Gender:</label>
-                    <select name="gender" value={formData.gender} onChange={handleChange} required>
-                        <option value="">Select</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Fitness Level:</label>
-                    <select name="fitnessLevel" value={formData.fitnessLevel} onChange={handleChange} required>
-                        <option value="">Select</option>
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Diet Preference:</label>
-                    <select name="dietPreference" value={formData.dietPreference} onChange={handleChange} required>
-                        <option value="">Select</option>
-                        <option value="Vegetarian">Vegetarian</option>
-                        <option value="Vegan">Vegan</option>
-                        <option value="Keto">Keto</option>
-                        <option value="None">None</option>
-                    </select>
-                </div>
-                <button type="submit">Generate Plans</button>
-            </form>
+    const handleGeneratePlans = async () => {
+        try {
+            const response = await fetch("/api/generate-plans", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+            const data = await response.json();
+            setFitnessPlan(data.fitnessPlan);
+            setMealPlan(data.mealPlan);
+        } catch (error) {
+            console.error("Error generating plans:", error);
+        }
+    };
 
+    return (
+        <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
+            <h1>Create Your Fitness & Meal Plans</h1>
+            <form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                <input
+                    type="text"
+                    name="firstName"
+                    placeholder="First Name"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    required
+                />
+                <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Last Name"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    required
+                />
+                <input
+                    type="number"
+                    name="age"
+                    placeholder="Age"
+                    value={formData.age}
+                    onChange={handleInputChange}
+                    required
+                />
+                <select name="gender" value={formData.gender} onChange={handleInputChange} required>
+                    <option value="Select" disabled>Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+                <div style={{ display: "flex", gap: "10px" }}>
+                    <input
+                        type="number"
+                        name="heightFeet"
+                        placeholder="Height (Feet)"
+                        value={formData.heightFeet}
+                        onChange={handleInputChange}
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="heightInches"
+                        placeholder="Height (Inches)"
+                        value={formData.heightInches}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+                <input
+                    type="number"
+                    name="weight"
+                    placeholder="Weight (lbs or kg)"
+                    value={formData.weight}
+                    onChange={handleInputChange}
+                    required
+                />
+                <select name="fitnessLevel" value={formData.fitnessLevel} onChange={handleInputChange} required>
+                    <option value="Select" disabled>Select Fitness Level</option>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                </select>
+                <select name="dietPreference" value={formData.dietPreference} onChange={handleInputChange} required>
+                    <option value="Select" disabled>Select Diet Preference</option>
+                    <option value="Vegan">Vegan</option>
+                    <option value="Vegetarian">Vegetarian</option>
+                    <option value="Omnivore">Omnivore</option>
+                    <option value="Keto">Keto</option>
+                    <option value="Other">Other</option>
+                </select>
+                <textarea
+                    name="dailyLifestyle"
+                    placeholder="Briefly describe your daily lifestyle..."
+                    value={formData.dailyLifestyle}
+                    onChange={handleInputChange}
+                    required
+                />
+                <div>
+                    <label>Fitness Goals:</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                        {["Lose weight", "Build muscle", "Increase stamina", "Improve flexibility", "General health"].map((goal) => (
+                            <label key={goal}>
+                                <input
+                                    type="checkbox"
+                                    name="fitnessGoals"
+                                    value={goal}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                fitnessGoals: [...prev.fitnessGoals, goal],
+                                            }));
+                                        } else {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                fitnessGoals: prev.fitnessGoals.filter((g) => g !== goal),
+                                            }));
+                                        }
+                                    }}
+                                />
+                                {goal}
+                            </label>
+                        ))}
+                    </div>
+                </div>
+                <button type="button" onClick={handleGeneratePlans}>Generate Plans</button>
+            </form>
             {fitnessPlan && (
                 <div>
-                    <h2>Fitness Plan</h2>
-                    <pre style={{ whiteSpace: "pre-wrap", background: "#f4f4f4", padding: "10px" }}>{fitnessPlan}</pre>
-                    <button onClick={() => downloadPDF(fitnessPlan, "fitnessplan")}>Download Fitness Plan</button>
+                    <h2>Your Fitness Plan</h2>
+                    <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>{fitnessPlan}</pre>
                 </div>
             )}
-
             {mealPlan && (
                 <div>
-                    <h2>Meal Plan</h2>
-                    <pre style={{ whiteSpace: "pre-wrap", background: "#f4f4f4", padding: "10px" }}>{mealPlan}</pre>
-                    <button onClick={() => downloadPDF(mealPlan, "mealplans")}>Download Meal Plan</button>
+                    <h2>Your Meal Plan</h2>
+                    <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>{mealPlan}</pre>
                 </div>
             )}
         </div>
