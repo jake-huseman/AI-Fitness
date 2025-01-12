@@ -1,6 +1,5 @@
 import { useState } from "react";
 import jsPDF from "jspdf";
-import axios from "axios";
 
 export default function GeneratePlans() {
   const [formData, setFormData] = useState({
@@ -18,21 +17,35 @@ export default function GeneratePlans() {
   const [fitnessPlan, setFitnessPlan] = useState("");
   const [mealPlan, setMealPlan] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const generatePlans = async () => {
     setLoading(true);
-
+    setError("");
     try {
-      const response = await axios.post("/api/generatePlans", {
-        ...formData,
+      const response = await fetch("/api/generatePlans", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
 
-      const { generatedFitnessPlan, generatedMealPlan } = response.data;
-      setFitnessPlan(generatedFitnessPlan);
-      setMealPlan(generatedMealPlan);
-    } catch (error) {
-      console.error("Error generating plans:", error);
-      alert("Failed to generate plans. Please try again.");
+      if (!response.ok) {
+        throw new Error("Failed to generate plans. Please try again.");
+      }
+
+      const data = await response.json();
+
+      if (!data.fitnessPlan || !data.mealPlan) {
+        throw new Error("Plans could not be generated. Please check the inputs and try again.");
+      }
+
+      setFitnessPlan(data.fitnessPlan);
+      setMealPlan(data.mealPlan);
+    } catch (err) {
+      console.error("Error generating plans:", err);
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -177,6 +190,8 @@ export default function GeneratePlans() {
         </button>
       </form>
 
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
       {fitnessPlan && (
         <div>
           <h2>Fitness Plan</h2>
@@ -195,7 +210,7 @@ export default function GeneratePlans() {
           <pre style={{ whiteSpace: "pre-wrap", background: "#f4f4f4", padding: "10px" }}>
             {mealPlan}
           </pre>
-          <button onClick={() => downloadPDF(mealPlan, "mealplans")}>
+          <button onClick={() => downloadPDF(mealPlan, "mealplan")}>
             Download Meal Plan
           </button>
         </div>

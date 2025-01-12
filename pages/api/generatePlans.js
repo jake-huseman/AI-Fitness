@@ -5,6 +5,7 @@ export default async function handler(req, res) {
     }
   
     const { OPENAI_API_KEY } = process.env;
+  
     if (!OPENAI_API_KEY) {
       res.status(500).json({ error: "OpenAI API Key not configured" });
       return;
@@ -12,18 +13,32 @@ export default async function handler(req, res) {
   
     const { firstName, lastName, fitnessLevel, dietPreference, additionalGoals } = req.body;
   
-    const prompt = `
-  Create a personalized fitness and meal plan for ${firstName} ${lastName}.
+    if (!firstName || !lastName || !fitnessLevel || !dietPreference) {
+      res.status(400).json({ error: "Missing required fields" });
+      return;
+    }
+  
+    const fitnessPrompt = `
+  Create a detailed weekly fitness plan for ${firstName} ${lastName}.
   Details:
   - Fitness Level: ${fitnessLevel}
-  - Diet Preference: ${dietPreference}
-  - Additional Goals: ${additionalGoals}
+  - Additional Goals: ${additionalGoals || "None"}
   
-  Provide a detailed fitness plan and a meal plan.
+  Provide a structured plan with a day-by-day breakdown including cardio, strength training, flexibility exercises, and rest days.
+  `;
+  
+    const mealPrompt = `
+  Create a personalized meal plan for ${firstName} ${lastName}.
+  Details:
+  - Diet Preference: ${dietPreference}
+  - Additional Goals: ${additionalGoals || "None"}
+  
+  Provide meal ideas for breakfast, lunch, dinner, and snacks with specific ingredients or options for variety.
   `;
   
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      // Fetch fitness plan
+      const fitnessResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,28 +46,44 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: "gpt-4",
-          messages: [{ role: "user", content: prompt }],
+          messages: [{ role: "user", content: fitnessPrompt }],
         }),
       });
   
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Failed to fetch from OpenAI API");
+      const fitnessData = await fitnessResponse.json();
+      if (!fitnessResponse.ok) {
+        throw new Error(fitnessData.error?.message || "Failed to fetch fitness plan");
       }
   
-      const data = await response.json();
-      const generatedContent = data.choices[0].message.content.split("\n\n");
+      const fitnessPlan = fitnessData.choices[0]?.message.content.trim();
   
-      const generatedFitnessPlan = generatedContent[0] || "Fitness plan could not be generated.";
-      const generatedMealPlan = generatedContent[1] || "Meal plan could not be generated.";
+      // Fetch meal plan
+      const mealResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [{ role: "user", content: mealPrompt }],
+        }),
+      });
+  
+      const mealData = await mealResponse.json();
+      if (!mealResponse.ok) {
+        throw new Error(mealData.error?.message || "Failed to fetch meal plan");
+      }
+  
+      const mealPlan = mealData.choices[0]?.message.content.trim();
   
       res.status(200).json({
-        generatedFitnessPlan,
-        generatedMealPlan,
+        fitnessPlan,
+        mealPlan,
       });
     } catch (error) {
       console.error("Error generating plans:", error.message);
-      res.status(500).json({ error: error.message || "Failed to generate plans. Please try again." });
+      res.status(500).json({ error: error.message });
     }
   }
   
