@@ -11,7 +11,15 @@ export default async function handler(req, res) {
       return;
     }
   
-    const { firstName, lastName, fitnessLevel, dietPreference, additionalGoals } = req.body;
+    const {
+      firstName,
+      lastName,
+      fitnessLevel,
+      dietPreference,
+      workoutTime,
+      calorieGoals,
+      additionalGoals,
+    } = req.body;
   
     if (!firstName || !lastName || !fitnessLevel || !dietPreference) {
       res.status(400).json({ error: "Missing required fields" });
@@ -22,22 +30,24 @@ export default async function handler(req, res) {
   Create a detailed weekly fitness plan for ${firstName} ${lastName}.
   Details:
   - Fitness Level: ${fitnessLevel}
+  - Workout Time Availability: ${workoutTime || "Not specified"}
+  - Calorie Intake Goals: ${calorieGoals || "Not specified"}
   - Additional Goals: ${additionalGoals || "None"}
   
-  Provide a structured plan with a day-by-day breakdown including cardio, strength training, flexibility exercises, and rest days.
+  Provide a structured plan with day-by-day breakdowns including cardio, strength training, flexibility exercises, and rest days. Include specific exercise names and durations.
   `;
   
     const mealPrompt = `
   Create a personalized meal plan for ${firstName} ${lastName}.
   Details:
   - Diet Preference: ${dietPreference}
+  - Calorie Intake Goals: ${calorieGoals || "Not specified"}
   - Additional Goals: ${additionalGoals || "None"}
   
-  Provide meal ideas for breakfast, lunch, dinner, and snacks with specific ingredients or options for variety.
+  Provide meal ideas for breakfast, lunch, dinner, and snacks with specific ingredients or options for variety. Include estimated calories for each meal.
   `;
   
     try {
-      // Fetch fitness plan
       const fitnessResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -51,13 +61,13 @@ export default async function handler(req, res) {
       });
   
       const fitnessData = await fitnessResponse.json();
+  
       if (!fitnessResponse.ok) {
         throw new Error(fitnessData.error?.message || "Failed to fetch fitness plan");
       }
   
       const fitnessPlan = fitnessData.choices[0]?.message.content.trim();
   
-      // Fetch meal plan
       const mealResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -71,6 +81,7 @@ export default async function handler(req, res) {
       });
   
       const mealData = await mealResponse.json();
+  
       if (!mealResponse.ok) {
         throw new Error(mealData.error?.message || "Failed to fetch meal plan");
       }
