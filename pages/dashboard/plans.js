@@ -41,7 +41,6 @@ export default function GeneratePlans() {
       }
 
       const data = await response.json();
-
       setFitnessPlan(data.fitnessPlan || "No fitness plan generated.");
       setMealPlan(data.mealPlan || "No meal plan generated.");
     } catch (err) {
@@ -52,10 +51,49 @@ export default function GeneratePlans() {
     }
   };
 
-  const downloadPDF = (content, type) => {
+  const downloadEnhancedPDF = (content, type, title) => {
     const doc = new jsPDF();
-    doc.text(content, 10, 10);
-    doc.save(`${formData.lastName}_${formData.firstName}_${type}.pdf`);
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 15;
+    const lineHeight = 10;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setTextColor(40, 116, 240); // Blue color
+    doc.text(title, margin, 20);
+
+    // Body Text
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0); // Black color
+    const textLines = doc.splitTextToSize(content, pageWidth - 2 * margin);
+    let y = 40;
+
+    textLines.forEach((line) => {
+      if (y + lineHeight > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    });
+
+    // Footer
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(
+        `Page ${i} of ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: "center" }
+      );
+    }
+
+    const fileName = `${formData.lastName}_${formData.firstName}_${type}.pdf`;
+    doc.save(fileName);
   };
 
   const downloadWord = (content, type) => {
@@ -75,10 +113,6 @@ export default function GeneratePlans() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const emailPlans = () => {
-    alert("Feature coming soon: Emailing plans!");
   };
 
   return (
@@ -117,18 +151,6 @@ export default function GeneratePlans() {
             type: "select",
             options: ["Vegetarian", "Vegan", "Keto", "None"],
           },
-          {
-            label: "Workout Time Availability (per day)",
-            name: "workoutTime",
-            type: "text",
-            placeholder: "E.g., 1 hour",
-          },
-          {
-            label: "Calorie Intake Goals",
-            name: "calorieIntake",
-            type: "text",
-            placeholder: "E.g., 2000 kcal/day",
-          },
         ].map((field, idx) => (
           <div key={idx} style={{ marginBottom: "10px" }}>
             <label>{field.label}:</label>
@@ -158,42 +180,29 @@ export default function GeneratePlans() {
             )}
           </div>
         ))}
-        <div>
-          <label>Additional Goals:</label>
-          <textarea
-            name="additionalGoals"
-            value={formData.additionalGoals}
-            onChange={handleChange}
-            placeholder="E.g., Gain muscle, lose weight, etc."
-          ></textarea>
-        </div>
-        <button type="submit" disabled={loading} style={{ marginTop: "20px" }}>
+
+        <button type="submit" disabled={loading}>
           {loading ? "Generating..." : "Generate Plans"}
         </button>
       </form>
 
-      {/* Error Handling */}
-      {loading && <p style={{ color: "blue" }}>Loading your personalized plans...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      {/* Display Plans */}
       {fitnessPlan && (
-        <div style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "10px", marginBottom: "20px" }}>
+        <div style={{ padding: "20px", border: "1px solid #ddd", borderRadius: "10px", marginBottom: "20px" }}>
           <h2>Fitness Plan</h2>
           <pre style={{ whiteSpace: "pre-wrap" }}>{fitnessPlan}</pre>
-          <button onClick={() => downloadPDF(fitnessPlan, "fitnessplan")}>Download as PDF</button>
-          <button onClick={() => downloadWord(fitnessPlan, "fitnessplan")}>Download as Word</button>
-          <button onClick={emailPlans}>Email Plans</button>
+          <button onClick={() => downloadEnhancedPDF(fitnessPlan, "fitnessplan", "Fitness Plan")}>
+            Download as PDF
+          </button>
         </div>
       )}
 
       {mealPlan && (
-        <div style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "10px", marginBottom: "20px" }}>
+        <div style={{ padding: "20px", border: "1px solid #ddd", borderRadius: "10px", marginBottom: "20px" }}>
           <h2>Meal Plan</h2>
           <pre style={{ whiteSpace: "pre-wrap" }}>{mealPlan}</pre>
-          <button onClick={() => downloadPDF(mealPlan, "mealplan")}>Download as PDF</button>
-          <button onClick={() => downloadWord(mealPlan, "mealplan")}>Download as Word</button>
-          <button onClick={emailPlans}>Email Plans</button>
+          <button onClick={() => downloadEnhancedPDF(mealPlan, "mealplan", "Meal Plan")}>
+            Download as PDF
+          </button>
         </div>
       )}
     </div>
